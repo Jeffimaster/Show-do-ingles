@@ -48,24 +48,32 @@ const App: React.FC = () => {
   const [showExplanation, setShowExplanation] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('english_quiz_leaderboard');
-    if (saved) {
-      setLeaderboard(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('english_quiz_leaderboard');
+      if (saved) {
+        setLeaderboard(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Erro ao carregar placar local", e);
     }
   }, []);
 
   const saveScore = (finalState: GameState) => {
-    const newEntry: LeaderboardEntry = {
-      name: finalState.playerName || 'Anônimo',
-      score: finalState.score,
-      level: finalState.level,
-      date: new Date().toLocaleDateString('pt-BR')
-    };
-    const updated = [...leaderboard, newEntry]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
-    setLeaderboard(updated);
-    localStorage.setItem('english_quiz_leaderboard', JSON.stringify(updated));
+    try {
+      const newEntry: LeaderboardEntry = {
+        name: finalState.playerName || 'Anônimo',
+        score: finalState.score,
+        level: finalState.level,
+        date: new Date().toLocaleDateString('pt-BR')
+      };
+      const updated = [...leaderboard, newEntry]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+      setLeaderboard(updated);
+      localStorage.setItem('english_quiz_leaderboard', JSON.stringify(updated));
+    } catch (e) {
+      console.error("Erro ao salvar placar", e);
+    }
   };
 
   const fetchNextQuestion = useCallback(async (currentLevel: number) => {
@@ -150,10 +158,10 @@ const App: React.FC = () => {
   };
 
   const renderStartScreen = () => (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 animate-in fade-in zoom-in duration-700">
+    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 animate-in fade-in zoom-in duration-700 px-2">
       <div className="relative">
         <div className="absolute inset-0 blur-3xl bg-blue-500/20 rounded-full animate-pulse"></div>
-        <h1 className="text-6xl md:text-8xl font-black text-yellow-400 font-show italic uppercase tracking-tighter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+        <h1 className="text-5xl md:text-8xl font-black text-yellow-400 font-show italic uppercase tracking-tighter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-none">
           Show do<br/><span className="text-white">Inglês</span>
         </h1>
       </div>
@@ -184,9 +192,9 @@ const App: React.FC = () => {
 
   const renderLoading = () => (
     <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
-      <Loader2 className="w-16 h-16 text-yellow-400 animate-spin" />
+      <Loader2 className="w-12 h-12 text-yellow-400 animate-spin" />
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Preparando Pergunta...</h2>
+        <h2 className="text-xl font-bold text-white mb-2">Preparando Pergunta...</h2>
       </div>
     </div>
   );
@@ -195,40 +203,42 @@ const App: React.FC = () => {
     <div className="max-w-2xl mx-auto py-6 px-4 space-y-6 animate-in slide-in-from-right duration-500">
       <div className="flex items-center gap-4">
         <button onClick={() => setGame(prev => ({ ...prev, status: GameStatus.START }))} className="p-2 hover:bg-white/10 rounded-full transition-colors text-yellow-400">
-          <ArrowLeft size={32} />
+          <ArrowLeft size={28} />
         </button>
-        <h2 className="text-3xl font-black text-yellow-400 font-show italic uppercase">Líderes</h2>
+        <h2 className="text-2xl font-black text-yellow-400 font-show italic uppercase">Líderes</h2>
       </div>
 
       <div className="bg-blue-900/30 border border-blue-500/30 rounded-2xl overflow-hidden backdrop-blur-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-blue-800/50 border-b border-blue-500/30">
-            <tr>
-              <th className="px-4 py-3 font-bold text-blue-300 uppercase">#</th>
-              <th className="px-4 py-3 font-bold text-blue-300 uppercase">Jogador</th>
-              <th className="px-4 py-3 font-bold text-blue-300 uppercase">Nível</th>
-              <th className="px-4 py-3 font-bold text-blue-300 uppercase text-right">Prêmio</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-blue-500/10">
-            {leaderboard.length > 0 ? leaderboard.map((entry, i) => (
-              <tr key={i} className="hover:bg-white/5 transition-colors">
-                <td className="px-4 py-3">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-yellow-400 text-blue-900' : 'bg-blue-800 text-white'}`}>
-                    {i + 1}
-                  </div>
-                </td>
-                <td className="px-4 py-3 font-semibold">{entry.name}</td>
-                <td className="px-4 py-3 text-blue-300">Lvl {entry.level}</td>
-                <td className="px-4 py-3 text-right font-black text-yellow-400">R$ {entry.score.toLocaleString('pt-BR')}</td>
-              </tr>
-            )) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-blue-800/50 border-b border-blue-500/30">
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-blue-400 italic">Nenhum recorde ainda.</td>
+                <th className="px-4 py-3 font-bold text-blue-300 uppercase">#</th>
+                <th className="px-4 py-3 font-bold text-blue-300 uppercase">Jogador</th>
+                <th className="px-4 py-3 font-bold text-blue-300 uppercase">Nível</th>
+                <th className="px-4 py-3 font-bold text-blue-300 uppercase text-right">Prêmio</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-blue-500/10">
+              {leaderboard.length > 0 ? leaderboard.map((entry, i) => (
+                <tr key={i} className="hover:bg-white/5 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-yellow-400 text-blue-900' : 'bg-blue-800 text-white'}`}>
+                      {i + 1}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 font-semibold truncate max-w-[120px]">{entry.name}</td>
+                  <td className="px-4 py-3 text-blue-300 whitespace-nowrap">Lvl {entry.level}</td>
+                  <td className="px-4 py-3 text-right font-black text-yellow-400 whitespace-nowrap">R$ {entry.score.toLocaleString('pt-BR')}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-blue-400 italic text-xs">Nenhum recorde ainda.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -238,14 +248,13 @@ const App: React.FC = () => {
 
     return (
       <div className="max-w-4xl mx-auto space-y-4 pt-4 px-2">
-        {/* Compact Header Stats */}
-        <div className="flex flex-row items-center justify-between bg-blue-900/40 px-4 py-2 rounded-xl border border-blue-500/30 backdrop-blur-sm shadow-md text-xs">
-          <div className="flex items-center gap-2">
-            <Trophy size={14} className="text-yellow-400" />
+        <div className="flex flex-row items-center justify-between bg-blue-900/40 px-3 py-2 rounded-xl border border-blue-500/30 backdrop-blur-sm shadow-md text-[10px] sm:text-xs">
+          <div className="flex items-center gap-1.5">
+            <Trophy size={12} className="text-yellow-400" />
             <span className="font-bold text-white whitespace-nowrap">R$ {MONEY_LEVELS[game.level - 1]}</span>
           </div>
           
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {[...Array(3)].map((_, i) => (
               <div key={i} className={`w-5 h-5 rounded-full border border-blue-900 flex items-center justify-center transition-colors
                 ${i < game.skipsLeft ? 'bg-yellow-400 text-blue-900' : 'bg-blue-800/40 text-blue-400'}`}>
@@ -254,26 +263,19 @@ const App: React.FC = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="font-black text-yellow-400">NÍVEL {game.level}/12</span>
-            <div className="w-12 h-1.5 bg-blue-900 rounded-full overflow-hidden border border-blue-500/30 hidden xs:block">
-              <div 
-                className="h-full bg-yellow-400 shadow-[0_0_5px_rgba(250,204,21,0.5)]" 
-                style={{ width: `${(game.level / MONEY_LEVELS.length) * 100}%` }}
-              />
-            </div>
           </div>
         </div>
 
         {!showExplanation ? (
-          /* Question View */
           <div className="space-y-4">
-            <div className="bg-gradient-to-br from-blue-900 to-blue-950 p-6 rounded-2xl border border-blue-400/30 shadow-xl relative overflow-hidden animate-in fade-in duration-300">
-              <h2 className="text-xl md:text-2xl font-bold leading-tight mb-6">
+            <div className="bg-gradient-to-br from-blue-900 to-blue-950 p-5 rounded-2xl border border-blue-400/30 shadow-xl relative overflow-hidden animate-in fade-in duration-300">
+              <h2 className="text-lg md:text-2xl font-bold leading-snug mb-5">
                 {game.currentQuestion.question}
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 {game.currentQuestion.options.map((option, idx) => (
                   <OptionCard
                     key={idx}
@@ -298,13 +300,13 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2 py-2">
+            <div className="flex flex-row justify-center gap-2 py-1">
               <Button 
                 variant="secondary" 
                 size="sm"
                 onClick={handleHint} 
                 disabled={game.hintUsedForCurrent || revealed}
-                className="flex-1 max-w-[150px]"
+                className="flex-1 text-[11px] h-9 px-2"
               >
                 <HelpCircle size={14} /> Dica
               </Button>
@@ -313,9 +315,9 @@ const App: React.FC = () => {
                 size="sm"
                 onClick={handleSkip} 
                 disabled={game.skipsLeft === 0 || revealed}
-                className="flex-1 max-w-[150px]"
+                className="flex-1 text-[11px] h-9 px-2"
               >
-                <SkipForward size={14} /> Pular ({game.skipsLeft})
+                <SkipForward size={14} /> Pular
               </Button>
               <Button 
                 variant="danger" 
@@ -326,33 +328,32 @@ const App: React.FC = () => {
                   saveScore(finalState);
                 }} 
                 disabled={revealed}
-                className="flex-1 max-w-[150px]"
+                className="flex-1 text-[11px] h-9 px-2"
               >
                 Parar
               </Button>
             </div>
           </div>
         ) : (
-          /* Explanation View */
-          <div className="bg-blue-900/50 p-8 rounded-3xl border-2 border-green-500/40 shadow-2xl animate-in zoom-in duration-500 flex flex-col items-center text-center space-y-6">
-            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)]">
-              <CheckCircle2 size={48} className="text-white" />
+          <div className="bg-blue-900/50 p-6 rounded-3xl border-2 border-green-500/40 shadow-2xl animate-in zoom-in duration-500 flex flex-col items-center text-center space-y-4 mx-2">
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)]">
+              <CheckCircle2 size={36} className="text-white" />
             </div>
             
             <div className="space-y-2">
-              <h3 className="text-3xl font-black text-green-400 uppercase italic">Resposta Correta!</h3>
-              <p className="text-blue-100 text-lg leading-relaxed max-w-lg">
+              <h3 className="text-2xl font-black text-green-400 uppercase italic">Correto!</h3>
+              <p className="text-blue-100 text-sm leading-relaxed max-w-sm">
                 {game.currentQuestion.explanation}
               </p>
             </div>
 
-            <div className="pt-4 w-full">
+            <div className="pt-2 w-full">
               <Button 
                 size="lg" 
                 onClick={nextLevel} 
-                className="w-full max-w-sm mx-auto shadow-[0_0_20px_rgba(250,204,21,0.3)] animate-bounce"
+                className="w-full max-w-sm mx-auto shadow-lg animate-bounce"
               >
-                {game.level === MONEY_LEVELS.length ? 'VER MEU PRÊMIO' : 'PRÓXIMO NÍVEL'} <ChevronRight size={24} />
+                {game.level === MONEY_LEVELS.length ? 'VER PRÊMIO' : 'PRÓXIMO NÍVEL'} <ChevronRight size={20} />
               </Button>
             </div>
           </div>
@@ -368,22 +369,22 @@ const App: React.FC = () => {
 
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 animate-in fade-in zoom-in duration-700 px-4">
-        <div className={`w-24 h-24 rounded-full flex items-center justify-center ${isWin ? 'bg-yellow-400 text-blue-900 shadow-xl' : 'bg-red-600 text-white shadow-xl'}`}>
-          {isWin ? <Trophy size={48} /> : <XCircle size={48} />}
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center ${isWin ? 'bg-yellow-400 text-blue-900' : 'bg-red-600 text-white shadow-xl'}`}>
+          {isWin ? <Trophy size={40} /> : <XCircle size={40} />}
         </div>
         <div className="space-y-2">
-          <h2 className="text-4xl font-black uppercase italic font-show">
+          <h2 className="text-3xl font-black uppercase italic font-show">
             {isWin ? 'VOCÊ GANHOU!' : 'FIM DE JOGO'}
           </h2>
-          <p className="text-xl text-blue-200">
-            {game.playerName}, você chegou ao Nível {game.level}
+          <p className="text-lg text-blue-200 truncate max-w-[280px]">
+            {game.playerName}, Level {game.level}
           </p>
           <div className="bg-yellow-400 text-blue-900 px-6 py-3 rounded-xl inline-block mt-2 shadow-lg border-2 border-yellow-200">
             <p className="text-[10px] uppercase font-black">Prêmio Final</p>
-            <p className="text-4xl font-black">R$ {prizeWon}</p>
+            <p className="text-3xl font-black">R$ {prizeWon}</p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
+        <div className="flex flex-col gap-3 w-full max-w-xs">
           <Button size="md" onClick={startGame} className="w-full">
             <RotateCcw size={18} /> NOVO JOGO
           </Button>
@@ -396,19 +397,19 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#000b2e] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-blue-950 to-black text-white selection:bg-yellow-400 selection:text-blue-900 overflow-x-hidden">
-      <header className="py-3 px-4 flex justify-between items-center border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-20">
+    <div className="min-h-screen bg-[#000b2e] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-blue-950 to-black text-white selection:bg-yellow-400 selection:text-blue-900">
+      <header className="py-2.5 px-4 flex justify-between items-center border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-20">
         <div 
           className="flex items-center gap-2 group cursor-pointer" 
           onClick={() => setGame(prev => ({...prev, status: GameStatus.START}))}
         >
-          <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-blue-900 shadow-md transform group-hover:scale-105 transition-all">
+          <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-blue-900 shadow-md">
             <Home size={18} strokeWidth={3} />
           </div>
-          <span className="text-lg font-black font-show italic tracking-tighter">SHOW DO INGLÊS</span>
+          <span className="text-base font-black font-show italic tracking-tighter">SHOW DO INGLÊS</span>
         </div>
-        <div className="px-3 py-1 bg-blue-900/50 rounded-full border border-blue-400/30 text-[9px] uppercase font-black text-blue-300 tracking-widest">
-          LEVEL UP SYSTEM
+        <div className="px-2.5 py-1 bg-blue-900/50 rounded-full border border-blue-400/30 text-[8px] uppercase font-black text-blue-300 tracking-tighter">
+          GEMINI 3 FLASH
         </div>
       </header>
 
@@ -423,21 +424,15 @@ const App: React.FC = () => {
         )}
 
         {game.lastError && (
-          <div className="mt-4 p-4 bg-red-600/20 border border-red-500 rounded-xl text-center max-w-md mx-auto shadow-lg">
-            <p className="text-red-400 font-bold mb-1 text-xs uppercase">Erro</p>
-            <p className="text-white text-sm mb-4 leading-snug">{game.lastError}</p>
+          <div className="mt-4 p-4 bg-red-600/20 border border-red-500 rounded-xl text-center max-w-md mx-auto shadow-lg px-6">
+            <p className="text-red-400 font-bold mb-1 text-[10px] uppercase">Erro</p>
+            <p className="text-white text-xs mb-4 leading-relaxed">{game.lastError}</p>
             <Button variant="danger" size="sm" onClick={() => fetchNextQuestion(game.level)} className="w-full">
               Tentar Novamente
             </Button>
           </div>
         )}
       </main>
-
-      {game.status === GameStatus.START && (
-        <footer className="fixed bottom-0 w-full py-4 text-center text-blue-500/20 text-[10px]">
-          <p>&copy; 2024 SHOW DO INGLÊS. POWERED BY AI.</p>
-        </footer>
-      )}
     </div>
   );
 };
